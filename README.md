@@ -27,6 +27,13 @@ This project fulfills the Full-Stack Engineer assignment by providing a robust, 
 Ensure you have Python 3.8 or higher installed on your machine.
 
 ### 1. Installation
+
+To run this project on your local machine, open your terminal and run the following commands to download the code and navigate into the folder:
+```bash
+git clone [https://github.com/koushikxy/hero-cycles-pricing.git](https://github.com/koushikxy/hero-cycles-pricing.git)
+cd hero-cycles-pricing
+```
+
 The core CLI engine requires zero external packages. However, to run the Web UI, install the lightweight API framework:
 `bash
 pip install fastapi uvicorn
