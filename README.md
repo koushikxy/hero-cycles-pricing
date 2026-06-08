@@ -30,36 +30,39 @@ Ensure you have Python 3.8 or higher installed on your machine.
 
 To run this project on your local machine, open your terminal and run the following commands to download the code and navigate into the folder:
 ```bash
-git clone [https://github.com/koushikxy/hero-cycles-pricing.git](https://github.com/koushikxy/hero-cycles-pricing.git)
+git clone https://github.com/koushikxy/hero-cycles-pricing.git
 cd hero-cycles-pricing
 ```
 
 The core CLI engine requires zero external packages. However, to run the Web UI, install the lightweight API framework:
-`bash
+```bash
 pip install fastapi uvicorn
-`
+```
 
 ### 2. How to Run the Command-Line Engine (CLI)
-The CLI reads the cycle configuration from `quote_request.json` and outputs a formatted, grouped receipt to the terminal.
+The CLI reads the cycle configuration from
+```quote_request.json```
+and outputs a formatted, grouped receipt to the terminal.
+
 1. Open your terminal in the project root.
 2. Run the following command:
-`bash
+```bash
 python cli.py
-`
+```
 
 ### 3. How to Run the Web Dashboard (UI)
 To view the interactive configurator in your browser:
 1. Start the local API server by running:
-`bash
+```bash
 python -m uvicorn main:app --reload
-`
+```
 2. Open your web browser and navigate to: **http://127.0.0.1:8000**
 
 ### 4. How to Run the Unit Tests
 To verify the core pricing logic, time boundaries, and error handling edge cases, run the built-in test suite:
-`bash
+```bash
 python -m unittest test_engine.py
-`
+```
 
 ---
 
