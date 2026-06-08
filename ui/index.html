@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Price Estimator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <header class="header">
+            <h1>Cycle Price Estimator</h1>
+            <div class="date-control">
+                <label>Pricing Date:</label>
+                <div class="input-group">
+                    <input type="date" id="quote-date">
+                    <button type="button" onclick="setToday()" class="btn-secondary">Today</button>
+                </div>
+            </div>
+        </header>
+
+        <main class="dashboard">
+            <section class="selection-panel">
+                <div class="form-group"><label>Frame:</label><select id="frame" class="part-select"></select></div>
+                <div class="form-group"><label>Handle Bar & Brakes:</label><select id="brakes" class="part-select"></select></div>
+                <div class="form-group"><label>Seating:</label><select id="seating" class="part-select"></select></div>
+                <div class="form-group"><label>Rims & Accessories:</label><select id="rims" class="part-select"></select></div>
+                <div class="form-group"><label>Tyres:</label><select id="tyres" class="part-select"></select></div>
+                <div class="form-group"><label>Chain Assembly:</label><select id="gears" class="part-select"></select></div>
+                
+                <button type="button" onclick="resetForm()" class="btn-reset">Reset Selection</button>
+            </section>
+
+            <section class="receipt-panel">
+                <h2>Live Quote</h2>
+                <div id="error-box" style="display:none;"></div>
+                <div id="receipt-list" class="receipt-container">
+                    <p style="color: #888; text-align: center;">Select parts to see price</p>
+                </div>
+                <div class="total-section">
+                    <span>Total Amount:</span>
+                    <h3 id="grand-total">₹0</h3>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
