@@ -1,16 +1,5 @@
 from datetime import date
-
-class PriceEntry:
-    def __init__(self, price, valid_from, valid_until=None):
-        self.price = price
-        self.valid_from = valid_from
-        self.valid_until = valid_until
-
-class Part:
-    def __init__(self, name, component, price_history):
-        self.name = name
-        self.component = component
-        self.price_history = price_history
+from src.models import Part, PriceEntry
 
 parts_db = {
     # --- Frame ---

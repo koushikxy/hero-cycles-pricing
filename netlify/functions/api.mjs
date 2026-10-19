@@ -16,8 +16,10 @@ export default async req => {
     const items = []
     for (const id of ids) {
       const p = parts[id]
-      const hit = p?.prices.find(([, from, until]) => date >= from && (!until || date < until))
-      if (hit) items.push({ name: p.name, price: hit[0] })
+      if (!p) return json({ detail: `Unknown part: '${id}'.` }, 400)
+      const hit = p.prices.find(([, from, until]) => date >= from && (!until || date < until))
+      if (!hit) return json({ detail: `No price for '${p.name}' on ${date}.` }, 400)
+      items.push({ name: p.name, component: p.component, price: hit[0] })
     }
     return json({ total: items.reduce((s, i) => s + i.price, 0), items })
   }

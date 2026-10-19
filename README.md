@@ -1,80 +1,76 @@
 # Hero Cycles Pricing Engine
 
-A time-sensitive pricing engine built for the Hero Cycles sales team. 
+A pricing tool for the Hero Cycles sales team. Part prices change over time, so every quote is priced for a chosen date.
 
-Live demo: https://hero-cycles-pricing.netlify.app (the two API routes run as a Netlify Function with the same price table and rules as the Python engine).
+Live demo: https://hero-cycles-pricing.netlify.app (the API runs there as a Netlify Function using the same price table and rules as the Python engine).
 
-This project fulfills the Full-Stack Engineer assignment by providing a robust, time-aware calculation engine alongside a strict command-line interface and a modern, responsive web dashboard.
+## What it does
 
----
+- Looks up each part's price for the quote date. A price starts on its `valid_from` day and stops the day before `valid_until`, so a change day always gets the new price.
+- Rejects a tubeless tyre together with a tube, unknown part IDs, and dates that have no price in the catalogue, instead of quietly leaving them out of the total.
+- CLI reads a JSON quote request and prints the price grouped by component.
+- Web page lets you pick parts and a date and updates the quote as you go.
 
-## 🚀 Features
-* **Time-Sensitive Logic:** Dynamically calculates component prices based on historical date ranges (inclusive/exclusive boundary logic).
-* **Command-Line Interface (Core Requirement):** Parses JSON quote requests and outputs a formatted price breakdown grouped by high-level components.
-* **Web Configurator (Extra Credit):** A single-page application (SPA) with a modern dashboard, real-time recalculation, and active validation.
-* **Robust Validation:** Prevents invalid physical configurations (e.g., selecting both Tubeless Tyres and standard Tubes).
+Built with Python, FastAPI and plain HTML/CSS/JavaScript.
 
----
+## Setup
 
-## 🛠 Tech Stack
-* **Backend Engine & CLI:** Python
-* **Web API:** FastAPI, Uvicorn
-* **Frontend UI:** HTML5, CSS3, JavaScript
+Needs Python 3.9 or newer.
 
----
-
-## 📦 Quick Start & Setup (Under 2 Minutes)
-
-### Prerequisites
-Ensure you have Python 3.8 or higher installed on your machine.
-
-### 1. Installation
-
-To run this project on your local machine, open your terminal and run the following commands to download the code and navigate into the folder:
 ```bash
 git clone https://github.com/koushikxy/hero-cycles-pricing.git
 cd hero-cycles-pricing
+pip install -r requirements.txt
 ```
 
-The core CLI engine requires zero external packages. However, to run the Web UI, install the lightweight API framework:
-```bash
-pip install fastapi uvicorn
-```
+The CLI and tests need nothing beyond Python; FastAPI and Uvicorn are only for the web page.
 
-### 2. How to Run the Command-Line Engine (CLI)
-The CLI reads the cycle configuration from
-```quote_request.json```
-and outputs a formatted, grouped receipt to the terminal.
+## CLI
 
-1. Open your terminal in the project root.
-2. Run the following command:
 ```bash
 python cli.py
+python cli.py --config my_quote.json
 ```
 
-### 3. How to Run the Web Dashboard (UI)
-To view the interactive configurator in your browser:
-1. Start the local API server by running:
+It reads `quote_request.json` by default:
+
+```
+Cycle Price Breakdown - 15 Dec 2026
+----------------------------------------
+Frame: ₹1,300
+Handle Bar & Brakes: ₹1,220
+Seating: ₹420
+Tyres: ₹1,650
+Rims: ₹370
+Chain Assembly: ₹1,000
+----------------------------------------
+TOTAL: ₹5,960
+```
+
+## Web page
+
 ```bash
 python -m uvicorn main:app --reload
 ```
-2. Open your web browser and navigate to: **http://127.0.0.1:8000**
 
-### 4. How to Run the Unit Tests
-To verify the core pricing logic, time boundaries, and error handling edge cases, run the built-in test suite:
+Then open http://127.0.0.1:8000.
+
+## Tests
+
 ```bash
 python -m unittest test_engine.py
 ```
 
----
+The tests cover prices before and after a change, the change day itself, a full cycle, the tube/tubeless conflict, unknown parts, dates before the catalogue starts, and that the Netlify price table matches the Python one.
 
-## 📂 Project Structure
+## Files
 
-* `/src` - Core backend logic (`models.py`, `database.py`, `engine.py`)
-* `/ui` - Frontend web assets (`index.html`, `style.css`, `script.js`)
-* `main.py` - The FastAPI server connecting the engine to the Web UI
-* `cli.py` - The Command-Line Interface application
-* `test_engine.py` - Unit test suite for pricing logic boundaries
-* `quote_request.json` - Sample input configuration for the CLI tool
-* `THINKING.md` - Problem breakdown and data model strategy
-* `UI_NOTES.md` - Design sensibility and UX decisions
+- `src/` - models, price table and pricing engine
+- `ui/` - web page
+- `main.py` - FastAPI server
+- `cli.py` - command-line tool
+- `test_engine.py` - tests
+- `quote_request.json` - sample CLI input
+- `netlify/` - serverless version of the API for the live demo
+- `Thinking.md` - problem breakdown and data model
+- `UI_NOTES.md` - UI decisions

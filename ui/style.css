@@ -149,3 +149,25 @@ label {
     margin-bottom: 15px; 
     font-size: 12px; 
 }
+
+.check-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.check-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-weight: 400;
+    font-size: 14px;
+    text-transform: none;
+    cursor: pointer;
+}
+
+.empty-note {
+    color: #888;
+    text-align: center;
+}
