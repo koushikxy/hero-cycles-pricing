@@ -1,17 +1,20 @@
 # Hero Cycles Pricing Engine
 
+![tests](https://github.com/koushikxy/hero-cycles-pricing/actions/workflows/tests.yml/badge.svg)
+
 A pricing tool for the Hero Cycles sales team. Part prices change over time, so every quote is priced for a chosen date.
 
-Live demo: https://hero-cycles-pricing.netlify.app (the API runs there as a Netlify Function using the same price table and rules as the Python engine).
+Live demo: https://hero-cycles-pricing.netlify.app
 
 ## What it does
 
 - Looks up each part's price for the quote date. A price starts on its `valid_from` day and stops the day before `valid_until`, so a change day always gets the new price.
-- Rejects a tubeless tyre together with a tube, unknown part IDs, and dates that have no price in the catalogue, instead of quietly leaving them out of the total.
-- CLI reads a JSON quote request and prints the price grouped by component.
-- Web page lets you pick parts and a date and updates the quote as you go.
+- Rejects a tubeless tyre together with a tube, unknown part IDs, and dates that have no price, instead of quietly leaving them out of the total.
+- Prices live in SQLite. The Prices page shows each part's price history and lets you add a price change from any date; the current window is split so older quotes are not affected.
+- Quotes can be saved. Each saved quote keeps the prices it was made with and opens as a printable page that can be saved as a PDF.
+- A CLI reads a JSON quote request and prints the price grouped by component.
 
-Built with Python, FastAPI and plain HTML/CSS/JavaScript.
+Built with Python, FastAPI, SQLite and plain HTML/CSS/JavaScript. GitHub Actions runs the tests on every push.
 
 ## Setup
 
@@ -23,7 +26,15 @@ cd hero-cycles-pricing
 pip install -r requirements.txt
 ```
 
-The CLI and tests need nothing beyond Python; FastAPI and Uvicorn are only for the web page.
+The database file `hero_cycles.db` is created and filled with the starting prices the first time the app or CLI runs. Delete it to start over.
+
+## Web app
+
+```bash
+python -m uvicorn main:app --reload
+```
+
+Then open http://127.0.0.1:8000. The Prices page is at `/admin.html`.
 
 ## CLI
 
@@ -47,29 +58,39 @@ Chain Assembly: ₹1,000
 TOTAL: ₹5,960
 ```
 
-## Web page
+## API
 
-```bash
-python -m uvicorn main:app --reload
-```
-
-Then open http://127.0.0.1:8000.
+| Method | Path | What it does |
+| --- | --- | --- |
+| GET | `/api/parts` | Parts grouped by component |
+| POST | `/api/calculate` | Price a list of parts for a date |
+| GET | `/api/prices` | Every part with its price history |
+| POST | `/api/prices` | Add a price change |
+| POST | `/api/quotes` | Price and save a quote |
+| GET | `/api/quotes` | Last 20 saved quotes |
+| GET | `/api/quotes/{id}` | One saved quote with its items |
 
 ## Tests
 
 ```bash
 python -m unittest test_engine.py
+npm test
 ```
 
-The tests cover prices before and after a change, the change day itself, a full cycle, the tube/tubeless conflict, unknown parts, dates before the catalogue starts, and that the Netlify price table matches the Python one.
+The Python tests cover prices before, after and on a change day, the tube/tubeless conflict, unknown parts, dates with no price, adding price changes, saved quotes keeping their prices, and that the Netlify starting prices match the Python ones. `npm test` runs the same kind of checks against the Netlify function.
+
+## Live demo
+
+Netlify only serves static files and functions, so the demo runs the API as a JavaScript function (`netlify/functions/api.mjs`) with the same rules, storing prices and quotes in Netlify Blobs instead of SQLite. Anyone can change prices on the demo.
 
 ## Files
 
-- `src/` - models, price table and pricing engine
-- `ui/` - web page
+- `src/` - models, database and pricing engine
+- `ui/` - quote page, prices page and printable quote
 - `main.py` - FastAPI server
 - `cli.py` - command-line tool
-- `test_engine.py` - tests
+- `test_engine.py` - Python tests
+- `tests/` - tests for the Netlify function
 - `quote_request.json` - sample CLI input
 - `netlify/` - serverless version of the API for the live demo
 - `Thinking.md` - problem breakdown and data model

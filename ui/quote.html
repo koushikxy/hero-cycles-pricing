@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cycle Quote</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div>
+                <h1>Hero Cycles - Price Quote</h1>
+                <nav class="nav no-print"><a href="/">Quote</a><a href="admin.html">Prices</a></nav>
+            </div>
+            <button type="button" onclick="window.print()" class="btn-secondary no-print">Download PDF</button>
+        </header>
+
+        <section class="page-panel">
+            <div id="quote"><p class="empty-note">Loading quote...</p></div>
+        </section>
+    </div>
+
+    <script>
+        const rupees = n => "₹" + n.toLocaleString("en-IN");
+        const fmt = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+        async function loadQuote() {
+            const box = document.getElementById("quote");
+            const id = new URLSearchParams(location.search).get("id");
+            const response = await fetch(`/api/quotes/${encodeURIComponent(id)}`);
+            if (!response.ok) {
+                box.innerHTML = '<p class="empty-note">Quote not found.</p>';
+                return;
+            }
+            const q = await response.json();
+            document.title = `Quote #${q.id}`;
+            box.innerHTML = `
+                <div class="quote-meta">
+                    <span>Quote #${q.id}</span>
+                    <span>Prices as on ${fmt(q.quote_date)}</span>
+                    <span>Created ${new Date(q.created_at).toLocaleString("en-IN")}</span>
+                </div>
+                <div class="table-wrap"><table>
+                    <tr><th>Component</th><th>Part</th><th class="num">Price</th></tr>
+                    ${q.items.map(i => `<tr><td>${i.component}</td><td>${i.name}</td><td class="num">${rupees(i.price)}</td></tr>`).join("")}
+                    <tr class="quote-total"><td colspan="2">Total</td><td class="num">${rupees(q.total)}</td></tr>
+                </table></div>`;
+        }
+
+        loadQuote();
+    </script>
+</body>
+</html>

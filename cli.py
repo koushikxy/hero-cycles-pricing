@@ -4,6 +4,7 @@ import sys
 from datetime import date
 from src.models import CycleConfiguration
 from src.engine import calculate_quote
+from src import database as db
 
 
 def run_cli():
@@ -12,11 +13,12 @@ def run_cli():
     args = parser.parse_args()
     sys.stdout.reconfigure(encoding="utf-8")
 
+    db.init_db()
     try:
         with open(args.config, encoding="utf-8") as file:
             data = json.load(file)
         quote_date = date.fromisoformat(data["date"])
-        total_price, items = calculate_quote(CycleConfiguration(quote_date, data["parts"]))
+        total_price, items = calculate_quote(CycleConfiguration(quote_date, data["parts"]), db.load_parts())
     except FileNotFoundError:
         sys.exit(f"Error: Could not find {args.config}")
     except (json.JSONDecodeError, KeyError, TypeError, ValueError) as e:

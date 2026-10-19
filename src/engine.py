@@ -1,8 +1,7 @@
 from src.models import CycleConfiguration
-from src.database import parts_db
 
 
-def calculate_quote(config: CycleConfiguration):
+def calculate_quote(config: CycleConfiguration, parts_db: dict):
     if "tubeless_tyre" in config.parts and "tube" in config.parts:
         raise ValueError("Conflict: Cannot select both 'Tubeless Tyre' and 'Tube' in one cycle.")
 

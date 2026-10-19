@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Part Prices</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <div>
+                <h1>Part Prices</h1>
+                <nav class="nav"><a href="/">Quote</a><a href="admin.html" class="active">Prices</a></nav>
+            </div>
+        </header>
+
+        <section class="page-panel">
+            <h2>Add a price change</h2>
+            <form id="price-form" class="price-form">
+                <div><label for="part">Part</label><select id="part" required></select></div>
+                <div><label for="price">New price (₹)</label><input type="number" id="price" min="1" step="1" required></div>
+                <div><label for="from">Starts on</label><input type="date" id="from" required></div>
+                <button type="submit" class="btn-primary">Save</button>
+            </form>
+            <p id="form-note" class="note"></p>
+        </section>
+
+        <section class="page-panel">
+            <h2>Price history</h2>
+            <div class="table-wrap"><table id="price-table"></table></div>
+        </section>
+    </div>
+
+    <script>
+        const rupees = n => "₹" + n.toLocaleString("en-IN");
+        const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+
+        async function loadPrices() {
+            const parts = await (await fetch('/api/prices')).json();
+            const select = document.getElementById("part");
+            const chosen = select.value;
+            select.innerHTML = parts.map(p => `<option value="${p.id}">${p.component} - ${p.name}</option>`).join("");
+            if (chosen) select.value = chosen;
+
+            const rows = parts.flatMap(p => p.prices.map(([price, from, until], i) => {
+                const current = from <= today && (!until || today < until);
+                return `<tr class="${current ? "current" : ""}">
+                    <td>${i === 0 ? p.name : ""}</td><td>${i === 0 ? p.component : ""}</td>
+                    <td>${from}</td><td>${until || "no end"}</td><td class="num">${rupees(price)}</td></tr>`;
+            }));
+            document.getElementById("price-table").innerHTML =
+                `<tr><th>Part</th><th>Component</th><th>From</th><th>Until</th><th class="num">Price</th></tr>${rows.join("")}`;
+        }
+
+        document.getElementById("price-form").addEventListener("submit", async e => {
+            e.preventDefault();
+            const note = document.getElementById("form-note");
+            const response = await fetch('/api/prices', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    part_id: document.getElementById("part").value,
+                    price: Number(document.getElementById("price").value),
+                    valid_from: document.getElementById("from").value
+                })
+            });
+            const data = await response.json();
+            note.className = response.ok ? "note" : "note error";
+            note.innerText = response.ok ? "Price saved. Quotes from that date use it." : data.detail;
+            if (response.ok) loadPrices();
+        });
+
+        document.getElementById("from").value = today;
+        loadPrices();
+    </script>
+</body>
+</html>

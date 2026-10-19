@@ -171,3 +171,169 @@ label {
     color: #888;
     text-align: center;
 }
+
+.nav {
+    display: flex;
+    gap: 14px;
+    margin-top: 6px;
+}
+
+.nav a {
+    color: #4a5568;
+    font-size: 13px;
+    text-decoration: none;
+}
+
+.nav a.active {
+    color: #2c5364;
+    font-weight: 600;
+    border-bottom: 2px solid #2c5364;
+}
+
+.btn-primary {
+    width: 100%;
+    margin-top: 16px;
+    padding: 10px;
+    background: #2c5364;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.btn-primary:disabled {
+    background: #a0aec0;
+    cursor: not-allowed;
+}
+
+.sub-heading {
+    margin-top: 28px;
+    margin-bottom: 8px;
+    font-size: 15px;
+    color: #1a1a1a;
+}
+
+a.receipt-row {
+    text-decoration: none;
+    font-size: 13px;
+}
+
+a.receipt-row:hover {
+    color: #2c5364;
+}
+
+.page-panel {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.page-panel h2 {
+    font-size: 17px;
+    margin-bottom: 16px;
+}
+
+.price-form {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.price-form input, .price-form select {
+    width: 100%;
+    padding: 10px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+}
+
+.price-form .btn-primary {
+    margin: 0;
+    padding: 12px 18px;
+}
+
+.note {
+    font-size: 13px;
+    margin-top: 10px;
+    color: #2f855a;
+}
+
+.note.error {
+    color: #c53030;
+}
+
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+th {
+    color: #4a5568;
+    font-size: 11px;
+    text-transform: uppercase;
+}
+
+td.num, th.num {
+    text-align: right;
+}
+
+tr.current td {
+    font-weight: 600;
+    color: #2c5364;
+}
+
+.quote-meta {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+    color: #4a5568;
+    font-size: 13px;
+    margin-bottom: 20px;
+}
+
+.quote-total td {
+    font-weight: 800;
+    font-size: 16px;
+    color: #2c5364;
+    border-bottom: none;
+    padding-top: 14px;
+}
+
+@media (max-width: 768px) {
+    .price-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .page-panel, .header {
+        box-shadow: none;
+        padding: 0;
+    }
+}

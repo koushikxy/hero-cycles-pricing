@@ -11,7 +11,10 @@
 
     <div class="app-container">
         <header class="header">
-            <h1>Cycle Price Estimator</h1>
+            <div>
+                <h1>Cycle Price Estimator</h1>
+                <nav class="nav"><a href="/" class="active">Quote</a><a href="admin.html">Prices</a></nav>
+            </div>
             <div class="date-control">
                 <label>Pricing Date:</label>
                 <div class="input-group">
@@ -42,6 +45,10 @@
                     <span>Total Amount:</span>
                     <h3 id="grand-total">₹0</h3>
                 </div>
+                <button type="button" id="save-btn" onclick="saveQuote()" class="btn-primary" disabled>Save Quote</button>
+
+                <h2 class="sub-heading">Recent Quotes</h2>
+                <div id="recent-quotes"></div>
             </section>
         </main>
     </div>

@@ -11,5 +11,8 @@ The most important elements are the "Live Quote" total and the selected Pricing 
 **3. What happens when a part combination is invalid?**
 The frontend prevents silent failures by utilizing the backend's logic. In `engine.py`, the system checks for invalid combinations (like selecting both "Tubeless Tyre" and "Tube") and raises a `ValueError`. The API returns this as an HTTP 400 error. The UI catches this specific error and dynamically displays a red `#error-box` above the receipt, immediately informing the salesperson of the conflict without breaking the application.
 
-**4. One thing you would improve if you had more time.**
-A quote export feature. The salesperson often needs to hand a written quote to a customer or email it to them. Right now the price is only visible on-screen. I would add a "Generate Quote PDF" button that produces a simple printable document with the cycle configuration, itemised prices, the pricing date, and a quote reference number. This closes the gap between the digital tool and the physical sales workflow.
+**4. Saving and sharing a quote.**
+The salesperson often has to hand a written quote to the customer. "Save Quote" stores the quote with the prices for the chosen date and opens a printable page with the parts, prices, pricing date and a quote number. "Download PDF" on that page uses the browser's save-as-PDF, so no extra library is needed. Saved quotes keep their prices even if a price changes later, and the last few show under "Recent Quotes".
+
+**5. One thing I would improve if I had more time.**
+The Prices page has no login, so anyone who can open the tool can change a price. In a real showroom I would add staff logins and only let managers add price changes.

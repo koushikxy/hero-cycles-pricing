@@ -49,6 +49,7 @@ function setToday() {
 function showEmpty() {
     document.getElementById("receipt-list").innerHTML = emptyNote;
     document.getElementById("grand-total").innerText = rupees(0);
+    document.getElementById("save-btn").disabled = true;
 }
 
 function resetForm() {
@@ -58,22 +59,30 @@ function resetForm() {
     showEmpty();
 }
 
-async function calculatePrice() {
-    const errorBox = document.getElementById("error-box");
-    errorBox.style.display = "none";
-
-    const parts = [
+function selectedParts() {
+    return [
         ...Array.from(document.querySelectorAll(".part-select")).map(s => s.value),
         ...Array.from(document.querySelectorAll(".part-check:checked")).map(c => c.value)
     ].filter(v => v !== "");
+}
 
-    if (parts.length === 0) return showEmpty();
+function quoteBody() {
+    return JSON.stringify({ date: document.getElementById("quote-date").value, parts: selectedParts() });
+}
+
+async function calculatePrice() {
+    const errorBox = document.getElementById("error-box");
+    const saveBtn = document.getElementById("save-btn");
+    errorBox.style.display = "none";
+    saveBtn.disabled = true;
+
+    if (selectedParts().length === 0) return showEmpty();
 
     try {
         const response = await fetch('/api/calculate', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ date: document.getElementById("quote-date").value, parts })
+            body: quoteBody()
         });
 
         const data = await response.json();
@@ -87,12 +96,34 @@ async function calculatePrice() {
         document.getElementById("receipt-list").innerHTML = data.items
             .map(item => `<div class="receipt-row"><span>${item.name}:</span><span>${rupees(item.price)}</span></div>`)
             .join("");
+        saveBtn.disabled = false;
 
     } catch (error) { console.error('Fetch error:', error); }
 }
 
+async function saveQuote() {
+    const response = await fetch('/api/quotes', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: quoteBody()
+    });
+    const data = await response.json();
+    if (response.ok) window.open(`quote.html?id=${data.id}`, "_blank");
+    loadRecentQuotes();
+}
+
+async function loadRecentQuotes() {
+    try {
+        const quotes = await (await fetch('/api/quotes')).json();
+        document.getElementById("recent-quotes").innerHTML = quotes.length
+            ? quotes.slice(0, 5).map(q => `<a class="receipt-row" href="quote.html?id=${q.id}" target="_blank"><span>#${q.id} · ${q.quote_date}</span><span>${rupees(q.total)}</span></a>`).join("")
+            : '<p class="empty-note">No saved quotes yet</p>';
+    } catch (error) { console.error("Could not load quotes:", error); }
+}
+
 window.addEventListener('DOMContentLoaded', () => {
     populateDropdowns();
+    loadRecentQuotes();
     showEmpty();
     const dateInput = document.getElementById('quote-date');
     dateInput.value = localToday();
