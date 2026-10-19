@@ -2,6 +2,8 @@
 
 A time-sensitive pricing engine built for the Hero Cycles sales team. 
 
+Live demo: https://hero-cycles-pricing.netlify.app (the two API routes run as a Netlify Function with the same price table and rules as the Python engine).
+
 This project fulfills the Full-Stack Engineer assignment by providing a robust, time-aware calculation engine alongside a strict command-line interface and a modern, responsive web dashboard.
 
 ---
