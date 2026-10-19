@@ -1,0 +1,17 @@
+{
+"steel_frame": {"name": "Steel Frame", "component": "Frame", "prices": [[1200, "2026-01-01", "2026-08-01"], [1300, "2026-08-01", "2027-01-01"], [1400, "2027-01-01", null]]},
+"aluminium_frame": {"name": "Aluminium Frame", "component": "Frame", "prices": [[2500, "2026-01-01", "2026-08-01"], [2600, "2026-08-01", "2027-01-01"], [2750, "2027-01-01", null]]},
+"standard_handlebar": {"name": "Standard Handlebar", "component": "Handle Bar & Brakes", "prices": [[300, "2026-01-01", "2026-08-01"], [320, "2026-08-01", "2027-01-01"], [350, "2027-01-01", null]]},
+"v_brakes": {"name": "V-Brakes", "component": "Handle Bar & Brakes", "prices": [[850, "2026-01-01", "2026-08-01"], [900, "2026-08-01", "2027-01-01"], [950, "2027-01-01", null]]},
+"disc_brakes": {"name": "Disc Brakes", "component": "Handle Bar & Brakes", "prices": [[1200, "2026-01-01", "2026-08-01"], [1300, "2026-08-01", "2027-01-01"], [1400, "2027-01-01", null]]},
+"basic_saddle": {"name": "Basic Saddle", "component": "Seating", "prices": [[400, "2026-01-01", "2026-08-01"], [420, "2026-08-01", "2027-01-01"], [450, "2027-01-01", null]]},
+"ergonomic_saddle": {"name": "Ergonomic Saddle", "component": "Seating", "prices": [[700, "2026-01-01", "2026-08-01"], [750, "2026-08-01", "2027-01-01"], [800, "2027-01-01", null]]},
+"standard_rim": {"name": "Standard Rim", "component": "Rims", "prices": [[200, "2026-01-01", "2026-08-01"], [210, "2026-08-01", "2027-01-01"], [230, "2027-01-01", null]]},
+"tube": {"name": "Tube", "component": "Rims", "prices": [[100, "2026-01-01", "2026-08-01"], [110, "2026-08-01", "2027-01-01"], [120, "2027-01-01", null]]},
+"spokes": {"name": "Spokes", "component": "Rims", "prices": [[150, "2026-01-01", "2026-08-01"], [160, "2026-08-01", "2027-01-01"], [175, "2027-01-01", null]]},
+"tubeless_tyre": {"name": "Tubeless Tyre", "component": "Tyres", "prices": [[1580, "2026-01-01", "2026-08-01"], [1650, "2026-08-01", "2027-01-01"], [1750, "2027-01-01", null]]},
+"standard_tyre": {"name": "Standard Tyre", "component": "Tyres", "prices": [[300, "2026-01-01", "2026-08-01"], [350, "2026-08-01", "2027-01-01"], [400, "2027-01-01", null]]},
+"single_speed_chain": {"name": "Single-Speed Chain", "component": "Chain Assembly", "prices": [[500, "2026-01-01", "2026-08-01"], [525, "2026-08-01", "2027-01-01"], [550, "2027-01-01", null]]},
+"4_gear_assembly": {"name": "4-Gear Assembly", "component": "Chain Assembly", "prices": [[950, "2026-01-01", "2026-08-01"], [1000, "2026-08-01", "2027-01-01"], [1100, "2027-01-01", null]]},
+"7_gear_assembly": {"name": "7-Gear Assembly", "component": "Chain Assembly", "prices": [[1400, "2026-01-01", "2026-08-01"], [1500, "2026-08-01", "2027-01-01"], [1650, "2027-01-01", null]]}
+}
