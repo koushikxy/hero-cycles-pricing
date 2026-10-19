@@ -4,75 +4,118 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Part Prices</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <div>
-                <h1>Part Prices</h1>
-                <nav class="nav"><a href="/">Quote</a><a href="admin.html" class="active">Prices</a></nav>
-            </div>
-        </header>
+    <header class="topbar">
+        <a href="/" class="brand">Hero Cycles <small>Sales desk</small></a>
+        <nav class="nav"><a href="/">New quote</a><a href="admin.html" class="active">Prices</a></nav>
+    </header>
 
-        <section class="page-panel">
-            <h2>Add a price change</h2>
+    <main class="page">
+        <h1 class="page-title">Prices</h1>
+        <p class="page-sub">Add a price change from any date. Quotes for earlier dates keep the old price.</p>
+
+        <section class="panel">
             <form id="price-form" class="price-form">
-                <div><label for="part">Part</label><select id="part" required></select></div>
-                <div><label for="price">New price (₹)</label><input type="number" id="price" min="1" step="1" required></div>
-                <div><label for="from">Starts on</label><input type="date" id="from" required></div>
-                <button type="submit" class="btn-primary">Save</button>
+                <div class="field"><label for="part">Part</label><select id="part" required></select></div>
+                <div class="field"><label for="price">New price (₹)</label><input type="number" id="price" min="1" step="1" required></div>
+                <div class="field"><label for="from">Starts on</label><input type="date" id="from" required></div>
+                <button type="submit" class="btn btn-primary">Save price</button>
             </form>
-            <p id="form-note" class="note"></p>
+            <p id="form-note" class="note" role="status"></p>
         </section>
 
-        <section class="page-panel">
-            <h2>Price history</h2>
-            <div class="table-wrap"><table id="price-table"></table></div>
-        </section>
-    </div>
+        <div class="toolbar">
+            <input type="search" id="search" placeholder="Search parts" aria-label="Search parts">
+            <div class="chips" id="chips"></div>
+        </div>
+        <div class="part-list" id="part-list"></div>
+    </main>
 
     <script>
-        const rupees = n => "₹" + n.toLocaleString("en-IN");
+        const $ = id => document.getElementById(id);
+        const rupees = n => "₹" + Math.round(n).toLocaleString("en-IN");
+        const niceDate = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
         const today = new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+        const covers = (date, [, from, until]) => from <= date && (!until || date < until);
 
-        async function loadPrices() {
-            const parts = await (await fetch('/api/prices')).json();
-            const select = document.getElementById("part");
-            const chosen = select.value;
-            select.innerHTML = parts.map(p => `<option value="${p.id}">${p.component} - ${p.name}</option>`).join("");
-            if (chosen) select.value = chosen;
+        let parts = [];
+        let component = "All";
 
-            const rows = parts.flatMap(p => p.prices.map(([price, from, until], i) => {
-                const current = from <= today && (!until || today < until);
-                return `<tr class="${current ? "current" : ""}">
-                    <td>${i === 0 ? p.name : ""}</td><td>${i === 0 ? p.component : ""}</td>
-                    <td>${from}</td><td>${until || "no end"}</td><td class="num">${rupees(price)}</td></tr>`;
-            }));
-            document.getElementById("price-table").innerHTML =
-                `<tr><th>Part</th><th>Component</th><th>From</th><th>Until</th><th class="num">Price</th></tr>${rows.join("")}`;
+        function renderList() {
+            const query = $("search").value.trim().toLowerCase();
+            const shown = parts.filter(p => (component === "All" || p.component === component) && p.name.toLowerCase().includes(query));
+            $("part-list").innerHTML = shown.length ? shown.map(p => {
+                const now = p.prices.find(e => covers(today, e));
+                const next = p.prices.find(([, from]) => from > today);
+                return `<div class="part-row">
+                    <div><strong>${p.name}</strong><small>${p.component}</small></div>
+                    <div><span class="now">${now ? rupees(now[0]) : "-"}</span><small>today</small></div>
+                    <div class="upcoming">${next ? `<small>Next change</small>${rupees(next[0])} from ${niceDate(next[1])}` : '<small>No change planned</small>'}</div>
+                    <button type="button" class="btn" data-part="${p.id}">Change price</button>
+                    <details class="history">
+                        <summary>Price history (${p.prices.length})</summary>
+                        <table>${p.prices.map(e => `<tr class="${covers(today, e) ? "current" : ""}">
+                            <td>${niceDate(e[1])}</td><td>${e[2] ? "to " + niceDate(e[2]) : "onwards"}</td><td class="num">${rupees(e[0])}</td></tr>`).join("")}
+                        </table>
+                    </details>
+                </div>`;
+            }).join("") : '<p class="empty-note" style="padding:18px">No parts match.</p>';
         }
 
-        document.getElementById("price-form").addEventListener("submit", async e => {
+        function renderChips() {
+            const names = ["All", ...new Set(parts.map(p => p.component))];
+            $("chips").innerHTML = names.map(n => `<button type="button" class="chip${n === component ? " active" : ""}" data-comp="${n}">${n}</button>`).join("");
+        }
+
+        async function loadPrices() {
+            parts = await (await fetch('/api/prices')).json();
+            const chosen = $("part").value;
+            $("part").innerHTML = parts.map(p => `<option value="${p.id}">${p.name} (${p.component})</option>`).join("");
+            if (chosen) $("part").value = chosen;
+            renderChips();
+            renderList();
+        }
+
+        $("chips").addEventListener("click", e => {
+            if (!e.target.dataset.comp) return;
+            component = e.target.dataset.comp;
+            renderChips();
+            renderList();
+        });
+
+        $("part-list").addEventListener("click", e => {
+            if (!e.target.dataset.part) return;
+            $("part").value = e.target.dataset.part;
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            $("price").focus({ preventScroll: true });
+        });
+
+        $("search").addEventListener("input", renderList);
+
+        $("price-form").addEventListener("submit", async e => {
             e.preventDefault();
-            const note = document.getElementById("form-note");
+            const note = $("form-note");
             const response = await fetch('/api/prices', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    part_id: document.getElementById("part").value,
-                    price: Number(document.getElementById("price").value),
-                    valid_from: document.getElementById("from").value
-                })
+                body: JSON.stringify({ part_id: $("part").value, price: Number($("price").value), valid_from: $("from").value })
             });
             const data = await response.json();
             note.className = response.ok ? "note" : "note error";
-            note.innerText = response.ok ? "Price saved. Quotes from that date use it." : data.detail;
-            if (response.ok) loadPrices();
+            note.innerText = response.ok
+                ? `Saved. ${$("part").selectedOptions[0].text.replace(/ \(.*/, "")} is ${rupees(Number($("price").value))} from ${niceDate($("from").value)}.`
+                : data.detail;
+            if (response.ok) {
+                $("price").value = "";
+                loadPrices();
+            }
         });
 
-        document.getElementById("from").value = today;
+        $("from").value = today;
         loadPrices();
     </script>
 </body>

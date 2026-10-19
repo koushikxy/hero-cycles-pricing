@@ -4,27 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cycle Quote</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="app-container">
-        <header class="header">
-            <div>
-                <h1>Hero Cycles - Price Quote</h1>
-                <nav class="nav no-print"><a href="/">Quote</a><a href="admin.html">Prices</a></nav>
-            </div>
-            <button type="button" onclick="window.print()" class="btn-secondary no-print">Download PDF</button>
-        </header>
+    <header class="topbar no-print">
+        <a href="/" class="brand">Hero Cycles <small>Sales desk</small></a>
+        <nav class="nav"><a href="/">New quote</a><a href="admin.html">Prices</a></nav>
+    </header>
 
-        <section class="page-panel">
-            <div id="quote"><p class="empty-note">Loading quote...</p></div>
-        </section>
-    </div>
+    <main class="page doc">
+        <div class="doc-actions no-print">
+            <a href="/" class="btn-link">Back to new quote</a>
+            <button type="button" onclick="window.print()" class="btn btn-primary">Download PDF</button>
+        </div>
+        <article class="panel" id="quote"><p class="empty-note">Loading quote...</p></article>
+    </main>
 
     <script>
-        const rupees = n => "₹" + n.toLocaleString("en-IN");
-        const fmt = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+        const rupees = n => "₹" + Math.round(n).toLocaleString("en-IN");
+        const niceDate = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 
         async function loadQuote() {
             const box = document.getElementById("quote");
@@ -35,18 +35,25 @@
                 return;
             }
             const q = await response.json();
-            document.title = `Quote #${q.id}`;
+            document.title = `Hero Cycles quote #${q.id}`;
             box.innerHTML = `
-                <div class="quote-meta">
-                    <span>Quote #${q.id}</span>
-                    <span>Prices as on ${fmt(q.quote_date)}</span>
-                    <span>Created ${new Date(q.created_at).toLocaleString("en-IN")}</span>
+                <div class="doc-head">
+                    <div>
+                        <p class="brand">Hero Cycles</p>
+                        <h1>Price quote</h1>
+                    </div>
+                    <dl class="meta">
+                        <dt>Quote no.</dt><dd>#${q.id}</dd>
+                        <dt>Prices as on</dt><dd>${niceDate(q.quote_date)}</dd>
+                        <dt>Created</dt><dd>${new Date(q.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" })}</dd>
+                    </dl>
                 </div>
-                <div class="table-wrap"><table>
+                <table>
                     <tr><th>Component</th><th>Part</th><th class="num">Price</th></tr>
                     ${q.items.map(i => `<tr><td>${i.component}</td><td>${i.name}</td><td class="num">${rupees(i.price)}</td></tr>`).join("")}
-                    <tr class="quote-total"><td colspan="2">Total</td><td class="num">${rupees(q.total)}</td></tr>
-                </table></div>`;
+                </table>
+                <div class="total"><span>Total</span><strong>${rupees(q.total)}</strong></div>
+                <p class="doc-foot">Prices are for the date shown above and may change after it.</p>`;
         }
 
         loadQuote();

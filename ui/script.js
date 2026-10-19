@@ -1,131 +1,170 @@
-const componentMap = {
-    "Frame": "frame",
-    "Handle Bar & Brakes": "brakes",
-    "Seating": "seating",
-    "Rims": "rims",
-    "Tyres": "tyres",
-    "Chain Assembly": "gears"
-};
+const LABELS = { "Rims": "Rims & accessories" };
+const MULTI = new Set(["Rims"]);
+const CONFLICTS = { tube: "tubeless_tyre", tubeless_tyre: "tube" };
 
-const rupees = n => "₹" + n.toLocaleString("en-IN");
-const emptyNote = '<p class="empty-note">Select parts to see price</p>';
+const $ = id => document.getElementById(id);
+const rupees = n => "₹" + Math.round(n).toLocaleString("en-IN");
+const niceDate = d => new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+let catalog = [];
+let requestNo = 0;
+const selected = new Set();
 
 function localToday() {
     const d = new Date();
     return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 }
 
-async function populateDropdowns() {
-    try {
-        const response = await fetch('/api/parts');
-        const partCatalog = await response.json();
+const priceOn = (part, date) => (part.prices.find(([, from, until]) => from <= date && (!until || date < until)) || [null])[0];
+const partName = id => catalog.find(p => p.id === id).name;
 
-        for (const [compName, parts] of Object.entries(partCatalog)) {
-            const box = document.getElementById(componentMap[compName]);
-            if (!box) continue;
-
-            if (box.tagName === "SELECT") {
-                box.innerHTML = '<option value="">-- Select a part --</option>';
-                for (const [id, name] of Object.entries(parts)) box.add(new Option(name, id));
-                box.addEventListener('change', calculatePrice);
-            } else {
-                box.innerHTML = "";
-                for (const [id, name] of Object.entries(parts)) {
-                    const label = document.createElement("label");
-                    label.innerHTML = `<input type="checkbox" class="part-check" value="${id}"> ${name}`;
-                    label.firstChild.addEventListener('change', calculatePrice);
-                    box.appendChild(label);
-                }
-            }
-        }
-    } catch (error) { console.error("Could not fetch parts:", error); }
+function groups() {
+    const out = {};
+    for (const p of catalog) (out[p.component] ??= []).push(p);
+    return out;
 }
 
-function setToday() {
-    document.getElementById('quote-date').value = localToday();
-    calculatePrice();
+function renderOptions(focusId) {
+    const date = $("quote-date").value;
+    $("builder").innerHTML = Object.entries(groups()).map(([comp, parts]) => `
+        <fieldset class="group">
+            <legend>${LABELS[comp] || comp}<small>${MULTI.has(comp) ? "Pick any" : "Pick one"}</small></legend>
+            <div class="options">${parts.map(p => optionHtml(p, comp, date)).join("")}</div>
+        </fieldset>`).join("");
+    if (focusId) document.querySelector(`#builder input[value="${focusId}"]`)?.focus();
 }
 
-function showEmpty() {
-    document.getElementById("receipt-list").innerHTML = emptyNote;
-    document.getElementById("grand-total").innerText = rupees(0);
-    document.getElementById("save-btn").disabled = true;
+function optionHtml(part, comp, date) {
+    const price = priceOn(part, date);
+    const other = CONFLICTS[part.id];
+    const blocked = other && selected.has(other);
+    const checked = selected.has(part.id);
+    const note = blocked ? `Can't go with ${partName(other)}` : price === null ? "No price on this date" : "";
+    return `<label class="option${checked ? " selected" : ""}${blocked ? " blocked" : ""}">
+        <input type="${MULTI.has(comp) ? "checkbox" : "radio"}" name="${comp}" value="${part.id}"${checked ? " checked" : ""}${blocked ? " disabled" : ""}>
+        <span class="option-name">${part.name}</span>
+        <span class="option-price">${price === null ? "-" : rupees(price)}</span>
+        ${note ? `<span class="option-note">${note}</span>` : ""}
+    </label>`;
 }
 
-function resetForm() {
-    document.querySelectorAll(".part-select").forEach(s => s.value = "");
-    document.querySelectorAll(".part-check").forEach(c => c.checked = false);
-    document.getElementById("error-box").style.display = "none";
-    showEmpty();
+function choose(input) {
+    const part = catalog.find(p => p.id === input.value);
+    if (input.type === "radio") {
+        const wasOn = selected.has(part.id);
+        catalog.filter(p => p.component === part.component).forEach(p => selected.delete(p.id));
+        if (!wasOn) selected.add(part.id);
+    } else if (selected.has(part.id)) {
+        selected.delete(part.id);
+    } else {
+        selected.add(part.id);
+    }
+    renderOptions(part.id);
+    updateQuote();
 }
 
-function selectedParts() {
-    return [
-        ...Array.from(document.querySelectorAll(".part-select")).map(s => s.value),
-        ...Array.from(document.querySelectorAll(".part-check:checked")).map(c => c.value)
-    ].filter(v => v !== "");
+function setTotal(text) {
+    $("grand-total").innerText = text;
+    $("mobile-total").innerText = text;
 }
 
-function quoteBody() {
-    return JSON.stringify({ date: document.getElementById("quote-date").value, parts: selectedParts() });
+function showError(message) {
+    $("error-box").innerText = message;
+    $("error-box").hidden = false;
+    $("lines").innerHTML = "";
+    setTotal("-");
 }
 
-async function calculatePrice() {
-    const errorBox = document.getElementById("error-box");
-    const saveBtn = document.getElementById("save-btn");
-    errorBox.style.display = "none";
-    saveBtn.disabled = true;
+async function updateQuote() {
+    const date = $("quote-date").value;
+    const parts = catalog.filter(p => selected.has(p.id)).map(p => p.id);
+    const myRequest = ++requestNo;
 
-    if (selectedParts().length === 0) return showEmpty();
+    $("summary-date").innerText = date ? `Prices as on ${niceDate(date)}` : "Pick a price date";
+    $("error-box").hidden = true;
+    $("saved-note").hidden = true;
+    $("save-btn").disabled = true;
+
+    if (parts.length === 0) {
+        $("lines").innerHTML = '<p class="empty-note">Pick parts on the left to build a quote.</p>';
+        return setTotal(rupees(0));
+    }
 
     try {
         const response = await fetch('/api/calculate', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: quoteBody()
+            body: JSON.stringify({ date, parts })
         });
-
         const data = await response.json();
-        if (!response.ok) {
-            errorBox.innerText = data.detail;
-            errorBox.style.display = "block";
-            return;
-        }
+        if (myRequest !== requestNo) return;
+        if (!response.ok) return showError(data.detail);
 
-        document.getElementById("grand-total").innerText = rupees(data.total);
-        document.getElementById("receipt-list").innerHTML = data.items
-            .map(item => `<div class="receipt-row"><span>${item.name}:</span><span>${rupees(item.price)}</span></div>`)
-            .join("");
-        saveBtn.disabled = false;
-
-    } catch (error) { console.error('Fetch error:', error); }
+        const byComp = {};
+        for (const item of data.items) (byComp[item.component] ??= []).push(item);
+        $("lines").innerHTML = Object.entries(byComp).map(([comp, items]) => `
+            <div class="line-group">
+                <div class="line-comp">${LABELS[comp] || comp}</div>
+                ${items.map(i => `<div class="line"><span>${i.name}</span><span>${rupees(i.price)}</span></div>`).join("")}
+            </div>`).join("");
+        setTotal(rupees(data.total));
+        $("save-btn").disabled = false;
+    } catch (error) {
+        if (myRequest === requestNo) showError("Could not reach the server. Try again.");
+    }
 }
 
 async function saveQuote() {
+    const button = $("save-btn");
+    button.disabled = true;
     const response = await fetch('/api/quotes', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: quoteBody()
+        body: JSON.stringify({ date: $("quote-date").value, parts: catalog.filter(p => selected.has(p.id)).map(p => p.id) })
     });
     const data = await response.json();
-    if (response.ok) window.open(`quote.html?id=${data.id}`, "_blank");
+    if (!response.ok) {
+        button.disabled = false;
+        return showError(data.detail);
+    }
+    $("saved-note").innerHTML = `Saved as quote #${data.id}. <a href="quote.html?id=${data.id}">Open to print or download</a>`;
+    $("saved-note").hidden = false;
     loadRecentQuotes();
 }
 
 async function loadRecentQuotes() {
     try {
         const quotes = await (await fetch('/api/quotes')).json();
-        document.getElementById("recent-quotes").innerHTML = quotes.length
-            ? quotes.slice(0, 5).map(q => `<a class="receipt-row" href="quote.html?id=${q.id}" target="_blank"><span>#${q.id} · ${q.quote_date}</span><span>${rupees(q.total)}</span></a>`).join("")
-            : '<p class="empty-note">No saved quotes yet</p>';
+        $("recent-quotes").innerHTML = quotes.length
+            ? quotes.slice(0, 5).map(q => `<a href="quote.html?id=${q.id}"><strong>#${q.id}</strong><span>${niceDate(q.quote_date)}</span><strong>${rupees(q.total)}</strong></a>`).join("")
+            : '<p class="empty-note">No saved quotes yet.</p>';
     } catch (error) { console.error("Could not load quotes:", error); }
 }
 
-window.addEventListener('DOMContentLoaded', () => {
-    populateDropdowns();
+function onDateChange() {
+    renderOptions();
+    updateQuote();
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+    $("quote-date").value = localToday();
+    $("quote-date").addEventListener('change', onDateChange);
+    $("today-btn").addEventListener('click', () => { $("quote-date").value = localToday(); onDateChange(); });
+    $("clear-btn").addEventListener('click', () => { selected.clear(); renderOptions(); updateQuote(); });
+    $("save-btn").addEventListener('click', saveQuote);
+    $("builder").addEventListener('click', e => {
+        if (e.target.matches('input') && !e.target.disabled) {
+            e.preventDefault();
+            choose(e.target);
+        }
+    });
+
     loadRecentQuotes();
-    showEmpty();
-    const dateInput = document.getElementById('quote-date');
-    dateInput.value = localToday();
-    dateInput.addEventListener('change', calculatePrice);
+    try {
+        catalog = await (await fetch('/api/prices')).json();
+        renderOptions();
+        updateQuote();
+    } catch (error) {
+        $("builder").innerHTML = '<p class="empty-note">Could not load parts. Refresh the page.</p>';
+    }
 });
